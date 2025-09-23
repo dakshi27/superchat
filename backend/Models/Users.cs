@@ -6,13 +6,14 @@ namespace backend.Models
     {
         [Key]
         public int Id { get; set; }
+        public Guid PublicId { get; set; } = Guid.NewGuid();
 
         [Required]
         [MaxLength(256)]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
 
         [MaxLength(100)]
         public string? FirstName { get; set; }
