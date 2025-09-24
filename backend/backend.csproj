@@ -1,10 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\AdminController.cs" />
+    <Compile Remove="Controllers\ErrorController.cs" />
+    <Compile Remove="Controllers\LeadershipController.cs" />
+    <Compile Remove="Controllers\VendorController.cs" />
+    <Compile Remove="Services\AdminService.cs" />
+    <Compile Remove="Services\EmailService.cs" />
+    <Compile Remove="Services\LeadershipService.cs" />
+    <Compile Remove="Services\VendorService.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="4.0.7.2" />

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
 namespace backend.Config
@@ -72,8 +72,15 @@ namespace backend.Config
             modelBuilder.Entity<Vendor>()
                 .HasOne(v => v.User)
                 .WithOne()
-                .HasForeignKey<Vendor>(v => v.UserId);
-            
+                .HasForeignKey<Vendor>(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict); 
+
+            modelBuilder.Entity<Vendor>()
+            .HasOne(v => v.AddedByLeader)
+            .WithMany()
+            .HasForeignKey(v => v.AddedByLeaderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
             // To ensure fast lookups and prevent duplicate GUIDs, adding a unique index to the new PublicId columns.
             modelBuilder.Entity<User>().HasIndex(u => u.PublicId).IsUnique();
             modelBuilder.Entity<Vendor>().HasIndex(v => v.PublicId).IsUnique();
