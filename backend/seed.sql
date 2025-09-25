@@ -13,17 +13,17 @@ DECLARE @RoleVendorId INT = 3;
 
 -- ADMIN USER 1 (Password: hlo123)
 INSERT INTO Users (Email, PasswordHash, FirstName, LastName, CreatedAt, PublicId)
-VALUES ('admin@example.com', '$2a$11$2HWtCEy9K7FrQ8OhbHVSROTysfkZeIVJhj33XNnycVsLU.OZAJb3a', 'Admin', 'User', GETUTCDATE(), NEWID());
+VALUES ('admin@example.com', '6BUs2KZD3CddlP5NMEdTog==;R9FPf6LiAFph/Mf0nm6O7oFc4+8zuFMNVZaTO6Ou83k=', 'Admin', 'User', GETUTCDATE(), NEWID());
 SET @AdminUserId = SCOPE_IDENTITY();
 
 -- LEADER USER (Password: hii12345)
 INSERT INTO Users (Email, PasswordHash, FirstName, LastName, CreatedAt, PublicId)
-VALUES ('leader@example.com', '$2a$11$cGlnksQmEeWoIhatkVp0qOWZQwWDVqMliz.ojsDahTMcwJZFXqMmO', 'Lead', 'User', GETUTCDATE(), NEWID());
+VALUES ('leader@example.com', 'rRgO6Fn88OwNTmZ3RdvF6Q==;YSnvL5y3gUymscMrfkw2A8QFq172PGPuVpNi189472c=', 'Lead', 'User', GETUTCDATE(), NEWID());
 SET @LeaderUserId = SCOPE_IDENTITY();
 
 -- VENDOR USER (Password: 12345)
 INSERT INTO Users (Email, PasswordHash, FirstName, LastName, CreatedAt, PublicId)
-VALUES ('vendor@example.com', '$2a$11$MzIx4iNXZcvMwI1aXiWZYOqu9.3vldQMttpVzGvBbJu0dY9jTkEx2', 'Vendor', 'User', GETUTCDATE(), NEWID());
+VALUES ('vendor@example.com', 'aDFzZFm2bkV2aWW3APVpzw==;OV6teR+9jhsN2gJZsZW3/W8wf2Z3EHwZKGDGDxTrOXs=', 'Vendor', 'User', GETUTCDATE(), NEWID());
 SET @VendorUserId = SCOPE_IDENTITY();
 
 

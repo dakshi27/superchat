@@ -11,16 +11,24 @@ namespace backend.DTOs
  
 
     // --- Admin DTOs ---
-    public record CreateVendorRequest(string CompanyName, string ContactEmail);
-    public record RejectVendorRequest(string? Reason);
-    public record VendorDto(
-        int Id,
-        string CompanyName,
-        string ContactEmail,
-        string Status,
-        DateTime CreatedAt,
-        int AddedByAdminId
-    );
+    //public record CreateVendorRequest(string CompanyName, string ContactEmail);
+    //public record RejectVendorRequest(string? Reason);
+    //public record VendorDto(
+    //    int Id,
+    //    string CompanyName,
+    //    string ContactEmail,
+    //    string Status,
+    //    DateTime CreatedAt,
+    //    int AddedByAdminId
+    //);
+
+    public record CreateUserRequest(
+    [Required][EmailAddress] string Email,
+    [Required][MinLength(6)] string Password,
+    [Required] string FirstName,
+    [Required] string LastName
+);
+
 
     // --- Vendor DTOs ---
     public class CreateEmployeeDto

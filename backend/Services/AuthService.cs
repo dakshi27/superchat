@@ -60,6 +60,38 @@ namespace backend.Services
             return vendor;
         }
 
+        public async Task<User?> CreateUserWithRoleAsync(string email, string password, string firstName, string lastName, string roleName)
+        {
+            // 1. Check if user already exists
+            if (await _context.Users.AnyAsync(u => u.Email == email))
+            {
+                return null; // User already exists
+            }
+
+            // 2. Get Role and Hash Password
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            if (role == null) throw new Exception($"Role '{roleName}' not found.");
+
+            var hashedPassword = PasswordHelper.Hash(password);
+
+            // 3. Create User
+            var newUser = new User
+            {
+                Email = email,
+                PasswordHash = hashedPassword,
+                FirstName = firstName,
+                LastName = lastName,
+                CreatedAt = DateTime.UtcNow,
+                PublicId = Guid.NewGuid(),
+                Roles = new List<Role> { role }
+            };
+
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+            return newUser;
+        }
+
+
         // --- HELPER METHODS FOR SECURITY/TOKEN GENERATION ---
 
         // Helper method to generate the JWT token
