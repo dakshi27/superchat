@@ -8,7 +8,7 @@ namespace backend.DTOs
 
     // --- Auth DTOs ---
     public record LoginRequest(string Email, string Password);
-    public record VendorSubmissionRequest(string FirstName, string LastName, string Password);
+ 
 
     // --- Admin DTOs ---
     public record CreateVendorRequest(string CompanyName, string ContactEmail);
