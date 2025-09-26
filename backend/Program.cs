@@ -1,25 +1,18 @@
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
+/*using DotNetEnv;
 using backend.Config;
-using backend.Models;
-using DotNetEnv;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using backend.Services;
+using Amazon;
+using Amazon.S3;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using System.Text;
-using System.Security.Claims; // Needed for Identity
-
-// IMPORTANT: Uncommented the necessary using statements that were commented out by you
-//using backend.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
-
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.OpenApi.Models;
 
 Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
 
 // --- CORS policy name ---
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -32,88 +25,101 @@ var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 var connectionString = $"Server={dbHost},{dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-  options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString));
 
-// --- COMMENTED OUT: SENDGRID/EMAIL CONFIG ---
-/*
 var emailConfig = new EmailConfig
 {
     SendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
 };
 // singleton service so it can be injected into other classes.
 builder.Services.AddSingleton(emailConfig);
-*/
 
 
-// --- Add Custom Services (UNCOMMENTED) ---
-//builder.Services.AddScoped<AuthService>();
+// --- Add Custom Services ---
+builder.Services.AddScoped<AuthService>();
 //builder.Services.AddScoped<LeadershipService>();
 //builder.Services.AddScoped<AdminService>();
-//// NOTE: EmailService is commented out until the config above is uncommented.
-//// builder.Services.AddScoped<EmailService>(); 
+//builder.Services.AddScoped<EmailService>();
 //builder.Services.AddScoped<VendorService>();
 
-
-// --- COMMENTED OUT: AWS S3 CONFIGURATION ---
-/*
 // Configuring the AWS S3
-var awsCredentials = new BasicAWSCredentials(
-    Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"),
-    Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
-);
-var awsConfig = new AmazonS3Config
-{
-    RegionEndpoint = RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_REGION"))
-};
-builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(awsCredentials, awsConfig));
-*/
+//var awsCredentials = new BasicAWSCredentials(
+//    Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"),
+//    Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
+//);
+//var awsConfig = new AmazonS3Config
+//{
+//    RegionEndpoint = RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_REGION"))
+//};
+//builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(awsCredentials, awsConfig));
 
-
-// --- COMMENTED OUT: JWT AUTHENTICATION CONFIGURATION ---
-/*
+// --- Add and Configure JWT Authentication ---
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
-        ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")))
-    };
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
+        ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")))
+    };
 });
-*/
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
-             policy =>
-             {
-                 // Allow requests from the default Angular development server origin.
-                 // For production, you would replace this with your actual frontend domain.
-                 policy.WithOrigins("http://localhost:4200")
-     .AllowAnyHeader()
-     .AllowAnyMethod();
-             });
+                      policy =>
+                      {
+                          // Allow requests from the default Angular development server origin.
+                          // For production, you would replace this with your actual frontend domain.
+                          policy.WithOrigins("http://localhost:4200")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
 });
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-// NOTE: JWT Auth is commented out, so Swagger configuration for JWT is also not strictly needed
 builder.Services.AddSwaggerGen(options =>
 {
-    // Add a general description for the Swagger page
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "My Vendor API", Version = "v1" });
-});
+    // Add a general description for the Swagger page
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "My Vendor API", Version = "v1" });
 
+    // 1. Define the security scheme (JWT Bearer)
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    // 2. Add a global security requirement to use the Bearer scheme
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -125,8 +131,8 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // In production, use the custom error handler.
-    app.UseExceptionHandler("/error");
+    // In production, use the custom error handler.
+    app.UseExceptionHandler("/error");
 }
 
 app.UseHttpsRedirection();
@@ -134,34 +140,174 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 
 // Add Authentication and Authorization middleware
-// NOTE: These are still needed to run the app, 
-// even if the JWT scheme is commented out above.
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers(); // Needed to map controller routes
 
-// --- Application Initialization for Seeding (Your Logic) ---
+app.Run();*/
+
+using DotNetEnv;
+using backend.Config;
+using backend.Services;
+using backend.Models; // Added this using statement
+using backend.Helpers; // Added this using statement
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.OpenApi.Models;
+
+Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
+
+// --- CORS policy name ---
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+var connectionString = $"Server={dbHost},{dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+var emailConfig = new EmailConfig
+{
+    SendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+};
+// singleton service so it can be injected into other classes.
+builder.Services.AddSingleton(emailConfig);
+
+
+// --- Add Custom Services ---
+builder.Services.AddScoped<AuthService>();
+//builder.Services.AddScoped<LeadershipService>();
+//builder.Services.AddScoped<AdminService>();
+//builder.Services.AddScoped<EmailService>();
+//builder.Services.AddScoped<VendorService>();
+
+
+// --- Add and Configure JWT Authentication ---
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
+        ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")))
+    };
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                     policy =>
+                     {
+                         // Allow requests from the default Angular development server origin.
+                         // For production, you would replace this with your actual frontend domain.
+                         policy.WithOrigins("http://localhost:4200")
+                                 .AllowAnyHeader()
+                                 .AllowAnyMethod();
+                     });
+});
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Add a general description for the Swagger page
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "My Vendor API", Version = "v1" });
+
+    // 1. Define the security scheme (JWT Bearer)
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    // 2. Add a global security requirement to use the Bearer scheme
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    // In production, use the custom error handler.
+    app.UseExceptionHandler("/error");
+}
+
+app.UseHttpsRedirection();
+
+app.UseCors(MyAllowSpecificOrigins);
+
+// Add Authentication and Authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers(); // Needed to map controller routes
+
+// --- CRITICAL: APPLICATION INITIALIZATION FOR SEEDING ---
+// THIS BLOCK WAS MISSING FROM YOUR CODE AND IS REQUIRED TO SEED THE DATABASE
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        // This line ensures the database exists and all migrations are applied
-        context.Database.Migrate();
+        // Ensure the database exists and all migrations are applied
+        context.Database.Migrate();
 
-        // Custom Seeding Logic (We need to insert the Admin user)
+        // Custom Seeding Logic to ensure the Admin user exists with the correct hash
         if (!context.Users.Any(u => u.Email == "admin@example.com"))
         {
+            // Get the admin role. Assumes it exists from a previous migration or seed.
             var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
 
-            // NOTE: We are using a placeholder hash now. We will replace this 
-            // with the actual BCrypt hash in the AuthService later.
-            var adminUser = new User
+            // --- IMPORTANT: Hash the password using the same method your app uses ---
+            string passwordToHash = "hlo123";
+            string hashedPassword = PasswordHelper.Hash(passwordToHash);
+
+            var adminUser = new User
             {
                 Email = "admin@example.com",
-                PasswordHash = "PlaceholderHash_CHANGE_ME",
+                PasswordHash = hashedPassword,
                 FirstName = "Root",
                 LastName = "Admin",
                 CreatedAt = DateTime.UtcNow,
@@ -172,14 +318,16 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
             Console.WriteLine("!!! Initial Admin User Seeded Successfully !!!");
         }
+        else
+        {
+            Console.WriteLine("--- Admin user already exists. Skipping seeding. ---");
+        }
     }
     catch (Exception ex)
     {
-        // Using a static Logger, as ILogger<Program> may not be available outside the scope
-        Console.WriteLine($"[ERROR] An error occurred while seeding the database: {ex.Message}");
+        Console.WriteLine($"[ERROR] An error occurred while seeding the database: {ex.Message}");
     }
 }
-// --- End Application Initialization ---
+// --- END APPLICATION INITIALIZATION ---
 
-
-app.Run(); // This is the single, final call to run the application
+app.Run();

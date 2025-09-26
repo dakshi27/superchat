@@ -7,9 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\AdminController.cs" />
     <Compile Remove="Controllers\ErrorController.cs" />
     <Compile Remove="Controllers\LeadershipController.cs" />
     <Compile Remove="Controllers\VendorController.cs" />
+    <Compile Remove="Services\AdminService.cs" />
     <Compile Remove="Services\EmailService.cs" />
     <Compile Remove="Services\LeadershipService.cs" />
     <Compile Remove="Services\VendorService.cs" />

@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using backend.Helpers;
-using Microsoft.Extensions.Configuration;
 
 namespace backend.Services
 {
@@ -35,11 +34,30 @@ namespace backend.Services
         public async Task<string?> LoginAsync(string email, string password)
         {
             var user = await GetUserByEmailAsync(email);
+            Console.WriteLine($"[DEBUG] User found: {user != null}");
+
+            if (user == null)
+            {
+                return null; // Authentication failed (User not found)
+            }
+
+            // --- CRUCIAL DEBUGGING LINES ---
+            // Debug line 2: Display the password hash retrieved from the database
+            Console.WriteLine($"[DEBUG] DB Hash: '{user.PasswordHash}'");
+
+            // Debug line 3: Attempt to hash the input password to see what it LOOKS like
+            // NOTE: This is NOT the Verify step, just seeing the input data
+            string inputHashFormat = PasswordHelper.Hash(password);
+            Console.WriteLine($"[DEBUG] Input Password: '{password}'");
+            // This line won't show the exact comparison hash, but confirms the input string.
+            // -------------------------------
 
             // Check if user exists AND if the password is valid
-            if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
+            if (!PasswordHelper.Verify(password, user.PasswordHash))
             {
-                return null; // Authentication failed
+                // Login failed due to comparison mismatch
+                Console.WriteLine("[DEBUG] VERIFY FAILED!");
+                return null;
             }
 
             user.LastLoginDate = DateTime.UtcNow;
@@ -49,6 +67,17 @@ namespace backend.Services
         }
 
         // 2. TOKEN VERIFICATION: ONLY verifies the token's validity against the Vendor record. (REQUIRED)
+        /*public async Task<Vendor?> VerifyVendorTokenAsync(Guid token)
+        {
+            // Finds a vendor record where the token is present AND the expiry date is in the future.
+            var vendor = await _context.Vendors
+                .FirstOrDefaultAsync(v =>
+                    v.VerificationToken == token &&
+                    v.TokenExpiry > DateTime.UtcNow);
+            // add the logic pleaseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+            return vendor;
+        }*/
+
         public async Task<Vendor?> VerifyVendorTokenAsync(Guid token)
         {
             // Finds a vendor record where the token is present AND the expiry date is in the future.
@@ -57,40 +86,21 @@ namespace backend.Services
                     v.VerificationToken == token &&
                     v.TokenExpiry > DateTime.UtcNow);
 
-            return vendor;
-        }
-
-        public async Task<User?> CreateUserWithRoleAsync(string email, string password, string firstName, string lastName, string roleName)
-        {
-            // 1. Check if user already exists
-            if (await _context.Users.AnyAsync(u => u.Email == email))
+            // ?? LOGIC ADDED HERE: Update the status to show the link has been verified/used.
+            if (vendor != null)
             {
-                return null; // User already exists
+                // We only update the status if it's currently 'Pending' or 'Initial'
+                // This marks that the user has successfully clicked the link.
+                if (vendor.Status == "Pending")
+                {
+                    vendor.Status = "Verified"; // Set a new status to track token usage
+                    vendor.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
             }
 
-            // 2. Get Role and Hash Password
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
-            if (role == null) throw new Exception($"Role '{roleName}' not found.");
-
-            var hashedPassword = PasswordHelper.Hash(password);
-
-            // 3. Create User
-            var newUser = new User
-            {
-                Email = email,
-                PasswordHash = hashedPassword,
-                FirstName = firstName,
-                LastName = lastName,
-                CreatedAt = DateTime.UtcNow,
-                PublicId = Guid.NewGuid(),
-                Roles = new List<Role> { role }
-            };
-
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-            return newUser;
+            return vendor;
         }
-
 
         // --- HELPER METHODS FOR SECURITY/TOKEN GENERATION ---
 
