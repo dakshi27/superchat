@@ -170,3 +170,5 @@ C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\refint\backend.Tests.d
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.pdb
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.genruntimeconfig.cache
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\ref\backend.Tests.dll
+C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Castle.Core.dll
+C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Moq.dll
